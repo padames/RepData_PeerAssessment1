@@ -88,31 +88,47 @@ inspection of the y-axis values.
 
 ## What is the average daily activity pattern?
 
-The original data frame has time intervals of 5 seconds that span
-24 hours (24*60/5=288 time markers) for 61 days (31 in October and 30 in November). 
+The original data frame has the running time in intervals of 5 minutes, expressed 
+as hours and seconds from 0 to 2355 for each of the 61 days of data (31 in October and 30 in November).
 
-```{r: daily activity pattern,echo=FALSE,results='asis'}
-vector_of_seconds_per_day <- (0:287)*5
-vector_seconds_for_61days <- rep(x=vector_of_seconds_per_day, times=61)
+I decided to convert those intervals to running minutes for each 24 hour period
+(24*60/5=288 5-minute time markers) for 61 days. 
+The following code creates a vector called `vector_minutes_for_61days` 
+with these daily running 5-minute intervals from 0 to 1435. 
+That vector will be used for plotting and extracting time for specific values of interest.
 
+```{r: daily activity pattern,echo=TRUE,results='asis'}
+vector_of_minutes_per_day <- (0:287)*5
+vector_minutes_for_61days <- rep(x=vector_of_minutes_per_day, times=61)
+```
+
+Then a new vector with the mean number of steps reported at each of the time intervals
+is created, the `NA` are removed:
+
+```{r: daily activity part 2, echo=TRUE}
 steps_per_interval<- tapply(X=clean_data$steps, 
-                            vector_seconds_for_61days, 
+                            vector_minutes_for_61days, 
                             FUN=mean,
                             na.rm=T,
                             simplify=TRUE)
 ```
 
-```{r: plot activity pattern, cache=TRUE,echo=TRUE,fig.height=6}
-plot(x=names(steps_per_interval),
-     y=steps_per_interval,
-     xlab="Daily intervals",
-     ylab="steps",
-     main="Activity pattern as steps per daily time interval",
-     type="l",
-     ylim=c(-5,205),
-     pch=7,
-     axes=FALSE)
+Now the maximum value of average steps per 5-minute interval can be extracted directly:
 
+```{r: max step interval, cache=TRUE, echo=FALSE, results='asis' }
+hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval)))/60)
+minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval))) %% 60
+maxsteps<-round(x=max(steps_per_interval), digits=0)
+paste0("max( steps_per_interval ) = ",
+       maxsteps, 
+       " steps")
+```
+
+From the vector of average steps per 5 minute intervals the time this maximum
+happens during the day is computed at `r paste0(hour_of_day_for_max_steps,":",minutes_of_day_for_max_steps," a.m.")`.
+
+
+```{r: preparing labels for plot, cache=TRUE, echo=FALSE}
 ## prepare labels  for x axis in this plot
 lbls<- as.character(clean_data$interval[0:288])
 insertColon <- function(l){
@@ -133,62 +149,41 @@ insertColon <- function(l){
         ""
 }
 prettylbls <- lapply(lbls,FUN=insertColon)
+```
 
+The series plot was generated with the following code:
+
+```{r: plot activity pattern, cache=FALSE,echo=TRUE,fig.height=6}
+plot(x=names(steps_per_interval),
+     y=steps_per_interval, 
+     xlab="Daily intervals", ylab="steps",
+     main="Activity pattern as steps per daily time interval",
+     type="l",
+     ylim=c(-5,205),
+     pch=7, axes=FALSE)
 Axis(side=1,
-     at=second_vector_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
+     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
      labels= prettylbls[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
-     col='blue',
-     col.ticks = 'red',
-     col.axis = 'blue',
-     tck = 0.03,
-     xaxs="r")
-
+     col='blue', col.ticks = 'red', col.axis = 'blue',
+     tck = 0.03, xaxs="r")
 Axis(side=3,
-     at=second_vector_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
+     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
      labels= c("","","","","","","","","","","","",""),
-     col = 'blue',
-     col.ticks = 'red',
-     col.axis = 'blue',
-     las=2,
-     tck = 1, # 100% of width or "grid lines on"
-     lty= "dotted",
-     xaxs="r")
-
-
+     col = 'blue', col.ticks = 'red', col.axis = 'blue',
+     las=2, tck = 1, # 100% of width or "grid lines on"
+     lty= "dotted", xaxs="r")
 Axis(side=2,
      at=c(0,50,100,150,200),
      labels= c("0","50","100", "150", "200"),
-     col='blue',
-     col.ticks = 'red',
-     col.axis = 'blue',
-     tck = 0.03,
-     xaxs="r")
-
+     col='blue', col.ticks = 'red', col.axis = 'blue',
+     tck = 0.03, xaxs="r")
 Axis(side=4,
      at=c(0,50,100,150,200),
      labels= c("","","", "", ""),     
-     col = 'blue',
-     col.ticks = 'red',
-     col.axis = 'blue',
-     las=2,
-     tck = 1, # 100% of width or "grid lines on"
-     lty= "dotted",
-     xaxs="r")
+     col = 'blue', col.ticks = 'red', col.axis = 'blue',
+     las=2, tck = 1, # 100% of width or "grid lines on"
+     lty= "dotted", xaxs="r")
 ```
-
-Let's compute the values for the peak number of steps seen in the plot
-occurring shortly after 8:15 on average during the two-month period of the
-study.
-
-```{r: max step interval, cache=TRUE, echo=TRUE }
-max(steps_per_interval)
-hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval)))/60)
-minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval))) %% 60
-```
-
-The maximum average number of steps is `r max(steps_per_interval)` 
-and occurs at time 
-`r paste0( hour_of_day_for_max_steps,":", minutes_of_day_for_max_steps )` of the day on average.
 
 
 ## Imputing missing values
