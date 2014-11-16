@@ -275,21 +275,10 @@ median_steps_per_day &lt;- median(count_steps_per_day, na.rm=TRUE)
 
 <p>The values are as follows:</p>
 
-<pre><code class="r">options(digits=2)
-paste( &quot;Mean steps per day  = &quot; , mean_steps_per_day )
-</code></pre>
-
 <pre><code>## [1] &quot;Mean steps per day  =  10766.1886792453&quot;
 </code></pre>
 
-<pre><code class="r">paste( &quot;Median steps per day = &quot;, median_steps_per_day )
-</code></pre>
-
 <pre><code>## [1] &quot;Median steps per day =  10765&quot;
-</code></pre>
-
-<pre><code class="r"># avoid side effects after this step
-rm(count_steps_per_day,mean_steps_per_day, median_steps_per_day)
 </code></pre>
 
 <p>These values check with those plotted in the histogram according to visual

@@ -114,26 +114,12 @@ median_steps_per_day <- median(count_steps_per_day, na.rm=TRUE)
 The values are as follows:
 
 
-```r
-options(digits=2)
-paste( "Mean steps per day  = " , mean_steps_per_day )
-```
-
 ```
 ## [1] "Mean steps per day  =  10766.1886792453"
 ```
 
-```r
-paste( "Median steps per day = ", median_steps_per_day )
-```
-
 ```
 ## [1] "Median steps per day =  10765"
-```
-
-```r
-# avoid side effects after this step
-rm(count_steps_per_day,mean_steps_per_day, median_steps_per_day)
 ```
 
 These values check with those plotted in the histogram according to visual
