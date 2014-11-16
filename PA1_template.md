@@ -12,7 +12,8 @@ Under the assumption that the target file is in the local
 directory where the script is running the following code 
 loads it into memory:
 
-```{r: load the data, echo=TRUE}
+
+```r
 defaultFileName <- "activity.csv"
 if( !file.exists( file.path(defaultFileName))) {
     defaultFileName <- unzip( zipfile="activity.zip" )  
@@ -26,21 +27,49 @@ rm(defaultFileName)
 ```
 The result is a data frame called `loaded_data`:
 
-```{r: loaded data frame str, echo=FALSE}
-str(loaded_data)
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : chr  "2012-10-01" "2012-10-01" "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 A few of the first, last, and some intermediate rows look as follows:
-```{r: first and last rows, echo=FALSE}
-head(loaded_data,n=3)
-loaded_data[12308:12310,]
-tail(loaded_data,n=3)
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+```
+
+```
+##       steps       date interval
+## 12308     7 2012-11-12     1735
+## 12309    41 2012-11-12     1740
+## 12310     7 2012-11-12     1745
+```
+
+```
+##       steps       date interval
+## 17566    NA 2012-11-30     2345
+## 17567    NA 2012-11-30     2350
+## 17568    NA 2012-11-30     2355
 ```
 Before proceeding it is a good idea to transform the dates from strings 
 into date format.
-```{r: dates from strings to real date format, echo=TRUE}
+
+```r
 clean_data <- loaded_data
 clean_data$date <- as.Date(x= clean_data$date,format="%Y-%m-%d")
 str(clean_data)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
 ## What is mean total number of steps taken per day?
@@ -48,7 +77,8 @@ str(clean_data)
 First a histogram of steps per day was generated with ggplot
 `geom_bar`:
 
-```{r:plot steps per day, cache=TRUE,echo=TRUE,fig.height=4,message=FALSE}
+
+```r
 require(ggplot2)
 ## The data is already in the long format so ggplot can be used to generate the
 ## histogram
@@ -58,27 +88,50 @@ ggplot(data=clean_data, aes(x=date,y=steps)) +
     labs(x= "Date", y= "Number of steps") 
 ```
 
+```
+## Warning: Removed 2304 rows containing missing values (position_stack).
+```
+
+![plot of chunk :plot steps per day](figure/:plot steps per day-1.png) 
+
 Then the mean and median of the average number of steps per day
 was computed from a transformation of the `steps`vector
 of the `clean_data` data frame using the `mean` function
 and the common date for each entry as the criterion for filtering
 using the R function `tapply`.
 
-```{r: compute steps per day,cache=FALSE, echo=TRUE}
+
+```r
 count_steps_per_day <-tapply(X=clean_data$steps,INDEX=clean_data$date,sum)
 ```
 Finally the mean and median of the steps per day are computed:
 
-```{r: compute stats for steps per day,cache=FALSE,echo=TRUE,results='asis'}
+
+```r
 mean_steps_per_day <- mean(count_steps_per_day, na.rm=TRUE)
 median_steps_per_day <- median(count_steps_per_day, na.rm=TRUE)
 ```
 The values are as follows:
 
-```{r: print stats steps per day, cache=FALSE,echo=TRUE}
+
+```r
 options(digits=2)
 paste( "Mean steps per day  = " , mean_steps_per_day )
+```
+
+```
+## [1] "Mean steps per day  =  10766.1886792453"
+```
+
+```r
 paste( "Median steps per day = ", median_steps_per_day )
+```
+
+```
+## [1] "Median steps per day =  10765"
+```
+
+```r
 # avoid side effects after this step
 rm(count_steps_per_day,mean_steps_per_day, median_steps_per_day)
 ```
@@ -91,18 +144,10 @@ inspection of the y-axis values.
 The original data frame has time intervals of 5 seconds that span
 24 hours (24*60/5=288 time markers) for 61 days (31 in October and 30 in November). 
 
-```{r: daily activity pattern,echo=FALSE,results='asis'}
-vector_of_seconds_per_day <- (0:287)*5
-vector_seconds_for_61days <- rep(x=vector_of_seconds_per_day, times=61)
 
-steps_per_interval<- tapply(X=clean_data$steps, 
-                            vector_seconds_for_61days, 
-                            FUN=mean,
-                            na.rm=T,
-                            simplify=TRUE)
-```
 
-```{r: plot activity pattern, cache=TRUE,echo=TRUE,fig.height=6}
+
+```r
 plot(x=names(steps_per_interval),
      y=steps_per_interval,
      xlab="Daily intervals",
@@ -176,19 +221,29 @@ Axis(side=4,
      xaxs="r")
 ```
 
+![plot of chunk : plot activity pattern](figure/: plot activity pattern-1.png) 
+
 Let's compute the values for the peak number of steps seen in the plot
 occurring shortly after 8:15 on average during the two-month period of the
 study.
 
-```{r: max step interval, cache=TRUE, echo=TRUE }
+
+```r
 max(steps_per_interval)
+```
+
+```
+## [1] 206.1698
+```
+
+```r
 hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval)))/60)
 minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval))) %% 60
 ```
 
-The maximum average number of steps is `r max(steps_per_interval)` 
+The maximum average number of steps is 206.17 
 and occurs at time 
-`r paste0( hour_of_day_for_max_steps,":", minutes_of_day_for_max_steps )` of the day on average.
+8:35 of the day on average.
 
 
 ## Imputing missing values
@@ -197,9 +252,16 @@ The number of days that contain `NA` can be computed with a table
 over a logical vector testing for `NA` in the vector that
 contains the count of the number of steps per day.
 
-```{r: NA count, cache=TRUE,echo=TRUE}
+
+```r
 count_steps_per_day <-tapply(X=clean_data$steps,INDEX=clean_data$date,sum)
 table(is.na(count_steps_per_day))
+```
+
+```
+## 
+## FALSE  TRUE 
+##    53     8
 ```
 
 There are 8 days that had `NA` data in them.
@@ -207,10 +269,17 @@ There are 8 days that had `NA` data in them.
 However the total number of actual `NA` readings can be computed with th following 
 similar R code:
 
-```{r: NA count steps total, cache=TRUE, echo=TRUE}
+
+```r
 table(is.na(clean_data$steps))
 ```
-So there are `r  table(is.na(clean_data$steps))[2][[1]]` `NA` entries in the `step`
+
+```
+## 
+## FALSE  TRUE 
+## 15264  2304
+```
+So there are 2304 `NA` entries in the `step`
 column.
 
 They can be filled in with the average number of steps per interval computed in the

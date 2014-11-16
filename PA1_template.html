@@ -244,7 +244,13 @@ str(clean_data)
 <p>First a histogram of steps per day was generated with ggplot
 <code>geom_bar</code>:</p>
 
-<pre><code>## Loading required package: ggplot2
+<pre><code class="r">require(ggplot2)
+## The data is already in the long format so ggplot can be used to generate the
+## histogram
+ggplot(data=clean_data, aes(x=date,y=steps)) +
+    geom_bar(stat=&quot;identity&quot;) +
+    labs(title=&quot;Number of steps per day&quot;) +
+    labs(x= &quot;Date&quot;, y= &quot;Number of steps&quot;) 
 </code></pre>
 
 <pre><code>## Warning: Removed 2304 rows containing missing values (position_stack).
@@ -269,10 +275,21 @@ median_steps_per_day &lt;- median(count_steps_per_day, na.rm=TRUE)
 
 <p>The values are as follows:</p>
 
+<pre><code class="r">options(digits=2)
+paste( &quot;Mean steps per day  = &quot; , mean_steps_per_day )
+</code></pre>
+
 <pre><code>## [1] &quot;Mean steps per day  =  10766.1886792453&quot;
 </code></pre>
 
+<pre><code class="r">paste( &quot;Median steps per day = &quot;, median_steps_per_day )
+</code></pre>
+
 <pre><code>## [1] &quot;Median steps per day =  10765&quot;
+</code></pre>
+
+<pre><code class="r"># avoid side effects after this step
+rm(count_steps_per_day,mean_steps_per_day, median_steps_per_day)
 </code></pre>
 
 <p>These values check with those plotted in the histogram according to visual
@@ -282,16 +299,6 @@ inspection of the y-axis values.</p>
 
 <p>The original data frame has time intervals of 5 seconds that span
 24 hours (24*60/5=288 time markers) for 61 days (31 in October and 30 in November). </p>
-
-<pre><code class="r">vector_of_seconds_per_day &lt;- (0:287)*5
-vector_seconds_for_61days &lt;- rep(x=vector_of_seconds_per_day, times=61)
-
-steps_per_interval&lt;- tapply(X=clean_data$steps, 
-                            vector_seconds_for_61days, 
-                            FUN=mean,
-                            na.rm=T,
-                            simplify=TRUE)
-</code></pre>
 
 <pre><code class="r">plot(x=names(steps_per_interval),
      y=steps_per_interval,
