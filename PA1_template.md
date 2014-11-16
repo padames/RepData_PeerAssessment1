@@ -170,10 +170,10 @@ The series plot was generated with the following code:
 ```r
 plot(x=names(steps_per_interval),
      y=steps_per_interval, 
-     xlab="Daily intervals", ylab="steps",
+     xlab="Daily intervals, minutes:seconds", ylab="number of steps",
      main="Activity pattern as steps per daily time interval",
      type="l",
-     ylim=c(-5,205),
+     ylim=c(-1,201),
      pch=7, axes=FALSE)
 Axis(side=1,
      at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
@@ -196,7 +196,7 @@ Axis(side=4,
      labels= c("","","", "", ""),     
      col = 'blue', col.ticks = 'red', col.axis = 'blue',
      las=2, tck = 1, # 100% of width or "grid lines on"
-     lty= "dotted", xaxs="r")
+     lty="dotted", xaxs="r")
 ```
 
 ![plot of chunk : plot activity pattern](figure/: plot activity pattern-1.png) 
@@ -238,7 +238,16 @@ table(is.na(clean_data$steps))
 So there are 2304 `NA` entries in the `step`
 column.
 
-They can be filled in with the average number of steps per interval computed in the
-previous step.
+They can be filled in a number of ways:
+
+    * with the average number of steps per interval computed in the previous non-empty step.
+    * with the average steps for the same time interval across all days.
+    * with the average steps for the same weekday or weekend day.
+    * with the average of the two non-empty neighbour intervals.
+
+Lets try the first strategy:
+
+
+
 
 ## Are there differences in activity patterns between weekdays and weekends?
