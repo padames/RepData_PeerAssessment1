@@ -420,7 +420,7 @@ lines(vector_of_minutes_per_day,
       type="l",
       col = "BLUE")    
 
-legend("topleft", c("Weekday","Weekend"), lty=c(1,1), lwd=c(1,1), col=c("red","blue"))
+legend("topleft", c("Weekday","Weekend"), lty=c(1,1), lwd=c(1,1), col=c("blue","red"))
 ```
 
 ![plot of chunk :weekday analysis](figure/:weekday analysis-1.png) 
