@@ -153,36 +153,39 @@ prettylbls <- lapply(lbls,FUN=insertColon)
 
 The series plot was generated with the following code:
 
-```{r: plot activity pattern, cache=FALSE,echo=TRUE,fig.height=6}
-plot(x=names(steps_per_interval),
-     y=steps_per_interval, 
-     xlab="Daily intervals, minutes:seconds", ylab="number of steps",
-     main="Activity pattern as steps per daily time interval",
-     type="l",
-     ylim=c(-1,201),
-     pch=7, axes=FALSE)
-Axis(side=1,
-     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
-     labels= prettylbls[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
-     col='blue', col.ticks = 'red', col.axis = 'blue',
-     tck = 0.03, xaxs="r")
-Axis(side=3,
-     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
-     labels= c("","","","","","","","","","","","",""),
-     col = 'blue', col.ticks = 'red', col.axis = 'blue',
-     las=2, tck = 1, # 100% of width or "grid lines on"
-     lty= "dotted", xaxs="r")
-Axis(side=2,
-     at=c(0,50,100,150,200),
-     labels= c("0","50","100", "150", "200"),
-     col='blue', col.ticks = 'red', col.axis = 'blue',
-     tck = 0.03, xaxs="r")
-Axis(side=4,
-     at=c(0,50,100,150,200),
-     labels= c("","","", "", ""),     
-     col = 'blue', col.ticks = 'red', col.axis = 'blue',
-     las=2, tck = 1, # 100% of width or "grid lines on"
-     lty="dotted", xaxs="r")
+```{r: plot activity pattern, cache=TRUE,echo=TRUE,fig.height=6}
+plotStepDailyAverages <- function( v_of_steps_per_interval, title ) {
+    plot(x=names(v_of_steps_per_interval),
+         y=v_of_steps_per_interval, 
+         xlab="Daily intervals, minutes:seconds", ylab="number of steps",
+         main= title,
+         type="l",
+         ylim=c(-1,201),
+         pch=7, axes=FALSE)
+    Axis(side=1,
+         at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
+         labels= prettylbls[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
+         col='blue', col.ticks = 'red', col.axis = 'blue',
+         tck = 0.03, xaxs="r")
+    Axis(side=3,
+         at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,288)],
+         labels= c("","","","","","","","","","","","",""),
+         col = 'blue', col.ticks = 'red', col.axis = 'blue',
+         las=2, tck = 1, # 100% of width or "grid lines on"
+         lty= "dotted", xaxs="r")
+    Axis(side=2,
+         at=c(0,50,100,150,200),
+         labels= c("0","50","100", "150", "200"),
+         col='blue', col.ticks = 'red', col.axis = 'blue',
+         tck = 0.03, xaxs="r")
+    Axis(side=4,
+         at=c(0,50,100,150,200),
+         labels= c("","","", "", ""),     
+         col = 'blue', col.ticks = 'red', col.axis = 'blue',
+         las=2, tck = 1, # 100% of width or "grid lines on"
+         lty="dotted", xaxs="r")
+}
+plotStepDailyAverages(steps_per_interval, "Activity pattern as steps per daily time interval")
 ```
 
 
@@ -210,14 +213,117 @@ column.
 
 They can be filled in a number of ways:
 
+    * with zero.
     * with the average number of steps per interval computed in the previous non-empty step.
     * with the average steps for the same time interval across all days.
     * with the average steps for the same weekday or weekend day.
     * with the average of the two non-empty neighbour intervals.
 
-Lets try the first strategy:
+### Replazing `NA`s with zero
+
+Let's try the first strategy:
+
+```{r: nas with zeros, cache=FALSE, echo=TRUE}
+# auxiliary functions:
+replaceNAforValue <- function( vect, indx, val) {
+    if ( is.na( vect ) )
+        val
+    else
+        vect
+}
+prepareVecOfNewValues <- function( vect, initial_val) {
+    f<-function(x_val) {
+        if (is.na(x_val))
+            initial_val
+        else
+            x_val
+    }
+    # build vector in one pass:
+    sapply(X=vect,FUN=f)
+}
+# a vector of indexes
+v_of_indx <-(row(clean_data))[,1]
+# a vector of replacement values:
+v_of_replacements <- prepareVecOfNewValues( clean_data$steps, as.numeric(0))
+
+l_of_replacements_for_na <- Map( f=replaceNAforValue, # function to map
+                              clean_data$steps, # vector of first arg to f 
+                              v_of_indx,  # vector of second arg to f
+                              v_of_replacements) # vector of third arg to f
+
+v_of_zeros_for_nas <- unlist(l_of_replacements_for_na)
+```
+
+Now let's compute the new steps per interval activity:
+
+```{r: activity nas as zeros, cache=FALSE,echo=TRUE}
+steps_per_interval_nas_as_zero <- tapply(X=v_of_zeros_for_nas,
+                                         vector_minutes_for_61days, 
+                                         FUN=mean,
+                                         na.rm=T,
+                                         simplify=TRUE)
+plotStepDailyAverages(steps_per_interval_nas_as_zero, "Activity pattern as steps per daily time interval, NAs as zero")
+```
+
+The effect is to lower the average because of the introduction of zeros.
+Now the maximum number of steps per 5-minute interval is:
+
+```{r: max steps with nas as zeros, echo=FALSE, results='asis'}
+hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval_nas_as_zero)))/60)
+minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval_nas_as_zero))) %% 60
+maxsteps<-round(x=max(steps_per_interval_nas_as_zero), digits=0)
+paste0("max( steps_per_interval_nas_as_zero ) = ",
+       maxsteps, 
+       " steps")
+```
+
+From this new vector of average steps per 5 minute intervals the time this maximum
+happens during the day is computed at `r paste0(hour_of_day_for_max_steps,":",minutes_of_day_for_max_steps," a.m.")`,
+so it does not change with respect to removing the `NA`s. The effect is only to scale down the 
+results but it does not shift the time scale.
 
 
+### Replacing `NA`s with the average steps for the same time interval across all days
 
+Replacing the `NA`s for the average steps per 5-minute interval as computed above reverts to
+the same curve because now the averages.
+
+```{r: replacing NAs with averages, echo=TRUE}
+prepareVecOfNewValuesAsAvg <- function( vect, avg) {
+    f<-function(x_val, y_val) {
+        if (is.na(x_val))
+            y_val
+        else
+            x_val
+    }
+    # build vector in one pass:
+    as.vector(mapply(FUN=f,vect,avg,SIMPLIFY=T))
+}
+
+avg_step_vect= rep(x=steps_per_interval,times=61)
+
+v_of_replacements_avg <- prepareVecOfNewValuesAsAvg( clean_data$steps, avg_step_vect )
+
+
+l_of_replacements_for_na_as_avg <- Map( f=replaceNAforValue, # function to map
+                                 clean_data$steps, # vector of first arg to f 
+                                 v_of_indx,  # vector of second arg to f
+                                 v_of_replacements_avg) # vector of third arg to f
+
+v_of_replacements_for_na_as_avg <- unlist(l_of_replacements_for_na_as_avg)
+
+steps_per_interval_nas_as_avg <- tapply(X=v_of_replacements_for_na_as_avg,
+                                         vector_minutes_for_61days, 
+                                         FUN=mean,
+                                         na.rm=T,
+                                         simplify=TRUE)
+
+plotStepDailyAverages(steps_per_interval_nas_as_avg, 
+                      "Activity pattern as steps per daily time interval, NAs as average")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r:weekday analysis, cache=TRUE}
+clean_data$weekday_name <- weekdays(clean_data$date)
+```
