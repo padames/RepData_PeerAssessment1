@@ -153,7 +153,7 @@ prettylbls <- lapply(lbls,FUN=insertColon)
 
 The series plot was generated with the following code:
 
-```{r: plot activity pattern, cache=TRUE,echo=TRUE,fig.height=6}
+```{r: plot activity pattern, cache=TRUE,echo=TRUE,fig.height=4.5}
 plotStepDailyAverages <- function( v_of_steps_per_interval, title ) {
     plot(x=names(v_of_steps_per_interval),
          y=v_of_steps_per_interval, 
@@ -256,7 +256,7 @@ v_of_zeros_for_nas <- unlist(l_of_replacements_for_na)
 
 Now let's compute the new steps per interval activity:
 
-```{r: activity nas as zeros, cache=FALSE,echo=TRUE}
+```{r: activity nas as zeros, cache=FALSE,echo=TRUE, fig.height=4.5}
 steps_per_interval_nas_as_zero <- tapply(X=v_of_zeros_for_nas,
                                          vector_minutes_for_61days, 
                                          FUN=mean,
@@ -288,7 +288,7 @@ results but it does not shift the time scale.
 Replacing the `NA`s for the average steps per 5-minute interval as computed above reverts to
 the same curve because now the averages.
 
-```{r: replacing NAs with averages, echo=TRUE}
+```{r: replacing NAs with averages, echo=TRUE, fig.height=4.5}
 prepareVecOfNewValuesAsAvg <- function( vect, avg) {
     f<-function(x_val, y_val) {
         if (is.na(x_val))
@@ -324,7 +324,114 @@ plotStepDailyAverages(steps_per_interval_nas_as_avg,
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r:weekday analysis, cache=TRUE}
+```{r:weekday analysis, cache=TRUE,echo=TRUE,fig.height=4.5,message=FALSE}
 clean_data$weekday_name <- weekdays(clean_data$date)
 
+clean_data$weekday_factor <- as.factor(sapply(clean_data$weekday_name, 
+                                    FUN=function(x) ifelse(x %in% c("Saturday","Sunday"), "Weekend", "Weekday")))
+
+v_steps_per_interval_weekdays <- clean_data$steps[clean_data$weekday_factor %in% c("Weekday")]
+
+vector_minutes_for_61days_weekdays <- vector_minutes_for_61days[clean_data$weekday_factor %in% c("Weekday")]
+
+
+steps_per_interval_weekdays <- tapply(X=v_steps_per_interval_weekdays,
+                                      vector_minutes_for_61days_weekdays, 
+                                      FUN=mean,
+                                      na.rm=T,
+                                      simplify=TRUE) 
+
+
+
+v_steps_per_interval_weekends <- clean_data$steps[clean_data$weekday_factor %in% c("Weekend")]
+
+vector_minutes_for_61days_weekends <- vector_minutes_for_61days[clean_data$weekday_factor %in% c("Weekend")]
+
+steps_per_interval_weekends <- tapply(X=v_steps_per_interval_weekends,
+                                      vector_minutes_for_61days_weekends, 
+                                      FUN=mean,
+                                      na.rm=T,
+                                      simplify=TRUE)
+
+plot(x=vector_of_minutes_per_day,
+     y=steps_per_interval_weekends, 
+     xlab="Daily intervals, minutes:seconds", ylab="number of steps",
+     main='Comparison of activity according to weekend/weekday',
+     type="l",
+     ylim=c(-1,250),
+     xlim=c(-1,1400),
+     pch=7, axes=FALSE,
+     col="RED")
+Axis(side=1,
+     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,300,325,350)],
+     labels= prettylbls[c(1,25,50,75,100,125,150,175,200,225,250,275,300,325,350)],
+     col='blue', col.ticks = 'red', col.axis = 'blue',
+     tck = 0.03, xaxs="r")
+Axis(side=3,
+     at=vector_of_minutes_per_day[c(1,25,50,75,100,125,150,175,200,225,250,275,300,325,350)],
+     labels= c("","","","","","","","","","","","","","",""),
+     col = 'blue', col.ticks = 'red', col.axis = 'blue',
+     las=2, tck = 1, # 100% of width or "grid lines on"
+     lty= "dotted", xaxs="r")
+Axis(side=2,
+     at=c(0,50,100,150,200,250),
+     labels= c("0","50","100", "150", "200","250"),
+     col='blue', col.ticks = 'red', col.axis = 'blue',
+     tck = 0.03, xaxs="r")
+Axis(side=4,
+     at=c(0,50,100,150,200,250),
+     labels= c("","","", "", "",""),     
+     col = 'blue', col.ticks = 'red', col.axis = 'blue',
+     las=2, tck = 1, # 100% of width or "grid lines on"
+     lty="dotted", xaxs="r")
+lines(vector_of_minutes_per_day,
+      steps_per_interval_weekdays,
+      type="l",
+      col = "BLUE")    
+
+legend("topleft", c("Weekday","Weekend"), lty=c(1,1), lwd=c(1,1), col=c("red","blue"))
+
+```
+
+So there is a difference in the trends between weekdays and weekends.
+The subject in this study shows more intense and earlier peaks of activity
+measured as steps per 5-minute interval on  weekdays than on weekends.
+However the mean and mediam show that the activity is more extensive on
+weekends indicating that the individual may be more
+physically active in those days in spite of starting later in the morning.
+
+
+
+```{r: calculating max and time weekdays and weekends, echo=TRUE}
+hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval_weekends)))/60)
+minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval_weekends))) %% 60
+maxsteps<-round(x=max(steps_per_interval_weekends), digits=0)
+paste0("max( steps_per_interval_weekends ) = ",
+       maxsteps, 
+       " steps, occuring at ", hour_of_day_for_max_steps, ":", minutes_of_day_for_max_steps)
+
+mean_steps_per_day <- mean(steps_per_interval_weekends, na.rm=TRUE)
+median_steps_per_day <- median(steps_per_interval_weekends, na.rm=TRUE)
+```
+```{r:cmax2,echo=FALSE}
+paste( "Mean steps per weekend day  = " , round(mean_steps_per_day, digits=1) )
+paste( "Median steps per weekend day = ", round(median_steps_per_day, digits=1) )
+```
+```{r:cmax3, echo=TRUE}
+hour_of_day_for_max_steps <- floor(as.numeric(names(which.max(x=steps_per_interval_weekdays)))/60)
+minutes_of_day_for_max_steps <- as.numeric(names(which.max(x=steps_per_interval_weekdays))) %% 60
+maxsteps<-round(x=max(steps_per_interval_weekdays), digits=0)
+```
+```{r:cmax4, echo=FALSE}
+paste0("max( steps_per_interval_weekdays ) = ",
+       maxsteps, 
+       " steps, occuring at ", hour_of_day_for_max_steps, ":", minutes_of_day_for_max_steps)
+```
+```{r:cmax5,echo=TRUE}
+mean_steps_per_day <- mean(steps_per_interval_weekdays, na.rm=TRUE)
+median_steps_per_day <- median(steps_per_interval_weekdays, na.rm=TRUE)
+```
+````{r:cmax7, echo=FALSE}
+paste( "Mean steps per weekend day  = " , round(mean_steps_per_day,digits=1) )
+paste( "Median steps per weekend day = ",round(median_steps_per_day,digits=1) )
 ```
